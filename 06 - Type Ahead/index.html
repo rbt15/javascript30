@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Type Ahead 👀</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <form class="search-form">
+      <input type="text" class="search" placeholder="City or State" />
+      <ul class="suggestions">
+        <li>Filter for a city</li>
+        <li>or a state</li>
+      </ul>
+    </form>
+    <div id="myModal" class="modal">
+      <!-- Modal content -->
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <p id="bilgiAlanı"></p>
+      </div>
+    </div>
+    <script>
+      const endpoint =
+        "https://raw.githubusercontent.com/snrylmz/il-ilce-json/master/js/il-ilce.json";
+
+      const cities = [];
+      fetch(endpoint)
+        .then((blob) => blob.json())
+        .then((data) => cities.push(...data.data));
+
+      //console.log(cities);
+
+      function findMatches(wordToMatch, cities) {
+        return cities.filter((place) => {
+          // here we need to figure out if the city or state matches what was searched
+          const regex = new RegExp(wordToMatch, "gi");
+          return place.il_adi.match(regex) || place.bolge.match(regex);
+        });
+      }
+
+      function numberWithCommas(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      }
+
+      function myFunction(e) {
+        bilgi = cities.filter((il) => {
+          if (e === il.il_adi) {
+            return il;
+          }
+        });
+        var info = bilgi[0].kisa_bilgi
+        var bilgiAlanı = document.getElementById("bilgiAlanı");
+        bilgiAlanı.innerHTML = info;
+        var modal = document.getElementById("myModal");
+        var span = document.getElementsByClassName("close")[0];
+        modal.style.display = "block";
+        span.onclick = function () {
+          modal.style.display = "none";
+        };
+      }
+
+      function displayMatches() {
+        const matchArray = findMatches(this.value, cities);
+        const html = matchArray
+          .map((place) => {
+            const regex = new RegExp(this.value, "gi");
+            const cityName = place.il_adi.replace(
+              regex,
+              `<span class="hl">${this.value}</span>`
+            );
+            const stateName = place.bolge.replace(
+              regex,
+              `<span class="hl">${this.value}</span>`
+            );
+            const kisa_bilgi = "'" + place.il_adi.toString() + "'";
+            return `
+      <li>
+        <span class="name" style="font-weight: bold" onclick="myFunction(${kisa_bilgi})">${cityName}</span>
+        <span class="name" > ${stateName}</span>
+        <span class="population">${numberWithCommas(place.nufus)}</span>
+      </li>
+    `;
+          })
+          .join("");
+        //console.log(html);
+        suggestions.innerHTML = html;
+      }
+
+      const searchInput = document.querySelector(".search");
+      const suggestions = document.querySelector(".suggestions");
+
+      searchInput.addEventListener("change", displayMatches);
+      searchInput.addEventListener("keyup", displayMatches);
+    </script>
+  </body>
+</html>
